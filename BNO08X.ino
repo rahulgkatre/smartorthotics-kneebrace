@@ -18,7 +18,6 @@ xyz_t gyro;
 euler_t ypr;
 quaternion_t rot_vec;
 steps_t step_ctr;
-stability_t stab;
 activity_t activity;
 
 bool mockBNO08X = true;
@@ -41,10 +40,6 @@ String quaternionToJsonString() {
 
 String stepsToJsonString() {
   return "{\"label\":\"Step Counter\",\"data\":{\"steps\":" + String(step_ctr.steps) + ",\"latency\":" + String(step_ctr.latency) + "}}";
-}
-
-String stabilityToJsonString() {
-  return "{\"label\":\"Stability Classification\",\"data\":{\"classification\":\"" + String(stab.classification) + "\"}}";
 }
 
 String getActivityJsonString() {
@@ -71,9 +66,6 @@ void setReports(void) {
   }
   if (!bno08x.enableReport(SH2_STEP_COUNTER, INTER_RATE_US)) {
     Serial.println("Could not enable step counter");
-  }
-  if (!bno08x.enableReport(SH2_STABILITY_CLASSIFIER, INTER_RATE_US)) {
-    Serial.println("Could not enable stability classifier");
   }
   if (!bno08x.enableReport(SH2_PERSONAL_ACTIVITY_CLASSIFIER, INTER_RATE_US)) {
     Serial.println("Could not enable personal activity classifier");
@@ -138,29 +130,7 @@ void getSensorData() {
       case SH2_ARVR_STABILIZED_RV:
         quaternionToEulerRV(&sensorValue.un.arvrStabilizedRV, &ypr);
         break;
-      case SH2_STABILITY_CLASSIFIER:
-      {
-        switch (sensorValue.un.stabilityClassifier.classification)
-        {
-        case STABILITY_CLASSIFIER_UNKNOWN:
-          stab.classification = "Unknown";
-          break;
-        case STABILITY_CLASSIFIER_ON_TABLE:
-          stab.classification = "On Table";
-          break;
-        case STABILITY_CLASSIFIER_STATIONARY:
-          stab.classification = "Stationary";
-          break;
-        case STABILITY_CLASSIFIER_STABLE:
-          stab.classification = "Stable";
-          break;
-        case STABILITY_CLASSIFIER_MOTION:
-          stab.classification = "In Motion";
-          break;
-        }
-      }
       case SH2_PERSONAL_ACTIVITY_CLASSIFIER:
-      {
         getMostLikelyActivity(sensorValue.un.personalActivityClassifier.mostLikelyState);
         activity.unknownConf = sensorValue.un.personalActivityClassifier.confidence[PAC_UNKNOWN];
         activity.inVehicleConf = sensorValue.un.personalActivityClassifier.confidence[PAC_IN_VEHICLE];
@@ -172,7 +142,6 @@ void getSensorData() {
         activity.runningConf = sensorValue.un.personalActivityClassifier.confidence[PAC_RUNNING];
         activity.onStairsConf = sensorValue.un.personalActivityClassifier.confidence[PAC_ON_STAIRS];
         break;
-      }
     }
   }
 }
@@ -206,8 +175,7 @@ void bno08XLoop() {
     Serial.print(curr - last);
     Serial.print("\t"); Serial.print(ypr.yaw);
     Serial.print("\t"); Serial.print(gyro.y); // Rotational acceleration on y-axis
-    Serial.print("\t"); Serial.print(magnitude(&accel, true));
-    Serial.print("\t"); Serial.print(stab.classification);
+    Serial.print("\t"); Serial.println(magnitude(&accel, true));
     last = curr;
   }
   if (!mockBNO08X) {

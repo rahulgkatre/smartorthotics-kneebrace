@@ -32,11 +32,6 @@ typedef struct steps_t {
   float latency;
 };
 
-// Stability classification. We only want to read when the sensor is moving (reading = 4)
-typedef struct stability_t {
-  char *classification;
-};
-
 typedef struct activity_t
 {
   char *mostLikely;
