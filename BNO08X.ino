@@ -1,14 +1,15 @@
 #include "utils.h"
+#include "analysis.h"
 
 Adafruit_BNO08x bno08x(BNO08X_RESET);
 sh2_SensorValue_t sensorValue;
 
 // 1000 Hz standard update rate
-#define REPORT_RATE_US 500
+#define REPORT_RATE_US 1500
 // 10 Hz interpretation rate
 #define INTER_RATE_US  100000
 // 400 Hz YPR update rate (do we need this?)
-#define ARVR_ROTVEC_US 2500
+#define ARVR_ROTVEC_US 5000
 // 100 Hz serial output rate
 #define UPDATE_RATE_MS 10
 #define UPDATE_RATE_CORRECTION 2
@@ -19,6 +20,9 @@ euler_t ypr;
 quaternion_t rot_vec;
 steps_t step_ctr;
 activity_t activity;
+
+window_filter_xyz accel_filter;
+window_filter_xyz gyro_filter;
 
 bool mockBNO08X = true;
 
@@ -73,6 +77,7 @@ void setReports(void) {
   if (!bno08x.enableReport(SH2_ARVR_STABILIZED_RV, ARVR_ROTVEC_US)) {
     Serial.println("Could not enable stabilized remote vector");
   }
+  Serial.println("Reading events");
 }
 
 void getMostLikelyActivity(uint8_t activity_id) {
@@ -114,18 +119,15 @@ void getSensorData() {
   if (bno08x.getSensorEvent(&sensorValue)) {
     switch (sensorValue.sensorId) {
       case SH2_GYROSCOPE_CALIBRATED:
-        gyro.x = sensorValue.un.gyroscope.x;
-        gyro.y = sensorValue.un.gyroscope.y;
-        gyro.z = sensorValue.un.gyroscope.z;
+        gyro.set(sensorValue.un.gyroscope.x, sensorValue.un.gyroscope.y, sensorValue.un.gyroscope.z);
+        gyro_filter.update(&gyro);
         break;
       case SH2_LINEAR_ACCELERATION:
-        accel.x = sensorValue.un.linearAcceleration.x;
-        accel.y = sensorValue.un.linearAcceleration.y;
-        accel.z = sensorValue.un.linearAcceleration.z;
+        accel.set(sensorValue.un.linearAcceleration.x, sensorValue.un.linearAcceleration.y, sensorValue.un.linearAcceleration.z);
+        accel_filter.update(&accel);
         break;
       case SH2_STEP_COUNTER:
-        step_ctr.steps = sensorValue.un.stepCounter.steps;
-        step_ctr.latency = sensorValue.un.stepCounter.latency;
+        step_ctr.set(sensorValue.un.stepCounter.steps, sensorValue.un.stepCounter.latency);
         break;
       case SH2_ARVR_STABILIZED_RV:
         quaternionToEulerRV(&sensorValue.un.arvrStabilizedRV, &ypr);
@@ -152,20 +154,20 @@ void bno08XSetup() {
   
   while (!Serial) delay(10);
 
+  // SETUP I2C
   if (!bno08x.begin_I2C((uint8_t)BNO08x_I2CADDR_DEFAULT, new TwoWire(BNO08X_SDA, BNO08X_SCL), (int32_t)0)) {
     Serial.println("Failed to find BNO08x chip");
     while (1) { delay(10); }
   }
+  Serial.println("BNO08x Found!");
 
+  // FLAG FOR NO IMU
   mockBNO08X = false;
   
-  Serial.println("BNO08x Found!");
+  // SET UP IMU REPORTS
   setReports();
-  
-  Serial.println("Reading events");
   delay(100);
-
-  last = millis();
+  last = millis();  
 }
 
 void bno08XLoop() {
@@ -175,7 +177,10 @@ void bno08XLoop() {
     Serial.print(curr - last);
     Serial.print("\t"); Serial.print(ypr.yaw);
     Serial.print("\t"); Serial.print(gyro.y); // Rotational acceleration on y-axis
-    Serial.print("\t"); Serial.println(magnitude(&accel, true));
+    Serial.print("\t"); Serial.print(magnitude(&accel, true));
+    Serial.print("\t"); Serial.print(step_ctr.steps); 
+    Serial.print("\t"); Serial.println(activity.mostLikely);
+   
     last = curr;
   }
   if (!mockBNO08X) {

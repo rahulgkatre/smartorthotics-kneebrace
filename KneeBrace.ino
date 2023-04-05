@@ -24,14 +24,14 @@
 #define BNO08X_SDA 2
 #define BNO08X_SCL 3
 
-// Sampling stuff
-#define SAMPLING_RATE 100
-
 // Print Out
 #define PRINT true
 
 // No Reset
 #define BNO08X_RESET -1
+
+// Analysis
+#define WINDOW_SIZE 10
 
 // Includes and defines for Filesystem.ino
 // Uncomment if working with Wifi-enabled feather

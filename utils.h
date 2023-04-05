@@ -5,34 +5,80 @@
 #include <cmath>
 
 // Datatype for storing accelerometer (linear) and gyro information
-typedef struct xyz_t {
+struct xyz_t {
   float x;
   float y;
   float z;
+  xyz_t() : x(0), y(0), z(0) {}
+  xyz_t(float nx, float ny, float nz) : x(nx), y(ny), z(nz) {}
+  xyz_t(const xyz_t& other) : x(other.x), y(other.y), z(other.z) {}
+  void set(float nx, float ny, float nz) {
+    x = nx;
+    y = ny;
+    z = nz;
+  }
+  xyz_t& operator=(const xyz_t& val) {
+    x = val.x;
+    y = val.y;
+    z = val.z;
+  }
+  xyz_t operator+(const xyz_t& val) const {
+    return xyz_t(x + val.x, y + val.y, z + val.z);
+  }
+  xyz_t operator-(const xyz_t& val) const {
+    return xyz_t(x - val.x, y - val.y, z - val.z);
+  }
+  xyz_t& operator+=(const xyz_t& val) {
+    x += val.x;
+    y += val.y;
+    z += val.z;
+    return *this;
+  }
+  xyz_t& operator-=(const xyz_t& val) {
+    x -= val.x;
+    y -= val.y;
+    z -= val.z;
+    return *this;
+  }
 };
 
 // Orientation in the world frame
-typedef struct euler_t {
+struct euler_t {
   float yaw;
   float pitch;
   float roll;
+  void set(float ny, float np, float nr) {
+    yaw = ny;
+    pitch = np;
+    roll = nr;
+  }
 };
 
 // Raw output from the sensor
-typedef struct quaternion_t {
+struct quaternion_t {
   float real;
   float i;
   float j;
   float k;
+  void set(float nr, float ni, float nj, float nk) {
+    real = nr;
+    i = ni;
+    j = nj;
+    k = nk;
+  }
 };
 
 // Step counter from initialization
-typedef struct steps_t {
+struct steps_t {
   int steps;
   float latency;
+  void set(float ns, float nl) {
+    steps = ns;
+    latency = nl;
+  }
 };
 
-typedef struct activity_t
+struct activity_t
 {
   char *mostLikely;
   float unknownConf;
