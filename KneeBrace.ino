@@ -9,58 +9,65 @@
 // For example, functions in Webserver.ino can access variables of BNO08X.ino and Webpage.ino, but not the other way around
 
 // Inludes and defines for BNO08X.ino
+#include <Arduino.h>
 #include <Adafruit_BNO08x.h>
+#include <I2C.h>
+#include <Wire.h>
+#include <rtos.h>
+// #include "rp2040/utils.h"
+
 // For SPI mode, we need a CS pin
 #define BNO08X_CS 10
 #define BNO08X_INT 9
-// For SPI mode, we also need a RESET
-// #define BNO08X_RESET 5
-// but not for I2C or UART
+
+// Pins for I2C mode
+#define BNO08X_SDA 2
+#define BNO08X_SCL 3
+
+// Sampling stuff
+#define SAMPLING_RATE 100
+
+// Print Out
+#define PRINT true
+
+// No Reset
 #define BNO08X_RESET -1
-// #define FAST_MODE
-#ifdef FAST_MODE
-// Top frequency is reported to be 1000Hz (but freq is somewhat variable)
-sh2_SensorId_t reportType = SH2_GYRO_INTEGRATED_RV;
-long reportIntervalUs = 2000;
-#else
-// Top frequency is about 250Hz but this report is more accurate
-sh2_SensorId_t reportType = SH2_ARVR_STABILIZED_RV;
-long reportIntervalUs = 5000;
-#endif
 
-// Incluedes and defines for Filesystem.ino
-#include <FS.h>
-#include <LittleFS.h>
+// Includes and defines for Filesystem.ino
+// Uncomment if working with Wifi-enabled feather
+// #include <FS.h>
+// #include <LittleFS.h>
 
-#define FORMAT_LITTLEFS_IF_FAILED false
-
-// Includes and defines for GaitAnalysis.ino
-// Add this when done @Srihari
+// #define FORMAT_LITTLEFS_IF_FAILED false
 
 // Includes and defines for Network.ino
-#include <WiFi.h>
+// #include <WiFi.h>
 
 // Includes and defines for Webpage.ino
 // None at this time
 
 // Includes and defines for Webserver.ino
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+// #include <AsyncTCP.h>
+// #include <ESPAsyncWebServer.h>
+
+// Includes and defines for GaitAnalysis.ino
 
 void setup()
 {
     // Serial port for debugging purposes
     Serial.begin(115200);
     bno08XSetup();
-    if (!fileSystemSetup()) {
-        return;
-    }
 
-    networkSetup();
-    webServerSetup();
+    // Uncomment if working with Wifi-enabled feather
+    // if (!fileSystemSetup()) {
+    //     return;
+    // }
+
+    // networkSetup();
+    // webServerSetup();
 }
 
 void loop() {
-    webServerLoop();
+    // webServerLoop();
     bno08XLoop();
 }
