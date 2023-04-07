@@ -11,18 +11,22 @@
 // Inludes and defines for BNO08X.ino
 #include <Arduino.h>
 #include <Adafruit_BNO08x.h>
-#include <I2C.h>
-#include <Wire.h>
-#include <rtos.h>
+
+// #include <I2C.h> ** REUIRED FOR MBED
+// #include <Wire.h> ** REQUIRED FOR MBED
+// #include <rtos.h>
 // #include "rp2040/utils.h"
 
 // For SPI mode, we need a CS pin
 #define BNO08X_CS 10
 #define BNO08X_INT 9
 
-// Pins for I2C mode
-#define BNO08X_SDA 2
-#define BNO08X_SCL 3
+// Pins for I2C mode - RP2040
+// #define BNO08X_SDA 2
+// #define BNO08X_SCL 3
+// Pins for I2C mode - ESP32
+#define BNO08X_SDA 21
+#define BNO08X_SCL 22
 
 // Print Out
 #define PRINT true
@@ -32,6 +36,15 @@
 
 // Analysis
 #define WINDOW_SIZE 10
+// 1000 Hz standard update rate
+#define REPORT_RATE_US 1500
+// 10 Hz interpretation rate
+#define INTER_RATE_US  100000
+// 400 Hz YPR update rate (do we need this?)
+#define ARVR_ROTVEC_US 5000
+// 30 Hz serial output rate
+#define UPDATE_RATE_MS 33
+#define UPDATE_RATE_CORRECTION 2
 
 // Includes and defines for Filesystem.ino
 // Uncomment if working with Wifi-enabled feather

@@ -4,16 +4,6 @@
 Adafruit_BNO08x bno08x(BNO08X_RESET);
 sh2_SensorValue_t sensorValue;
 
-// 1000 Hz standard update rate
-#define REPORT_RATE_US 1500
-// 10 Hz interpretation rate
-#define INTER_RATE_US  100000
-// 400 Hz YPR update rate (do we need this?)
-#define ARVR_ROTVEC_US 5000
-// 100 Hz serial output rate
-#define UPDATE_RATE_MS 10
-#define UPDATE_RATE_CORRECTION 2
-
 xyz_t accel;
 xyz_t gyro;
 euler_t ypr;
@@ -25,6 +15,7 @@ window_filter_xyz accel_filter;
 window_filter_xyz gyro_filter;
 
 bool mockBNO08X = true;
+unsigned long last_reading = 0;
 
 String accelToJsonString() {
   return "{\"label\":\"Acceleration\",\"data\":{\"x\":" + String(accel.x) + ",\"y\":" + String(accel.y) + ",\"z\":" + String(accel.z) + "}}";
@@ -148,14 +139,12 @@ void getSensorData() {
   }
 }
 
-unsigned long last = 0;
-
 void bno08XSetup() {
   
   while (!Serial) delay(10);
 
   // SETUP I2C
-  if (!bno08x.begin_I2C((uint8_t)BNO08x_I2CADDR_DEFAULT, new TwoWire(BNO08X_SDA, BNO08X_SCL), (int32_t)0)) {
+  if (!bno08x.begin_I2C((uint8_t)BNO08x_I2CADDR_DEFAULT)) { //, new TwoWire(BNO08X_SDA, BNO08X_SCL), (int32_t)0)) { ** REQUIRED FOR MBED
     Serial.println("Failed to find BNO08x chip");
     while (1) { delay(10); }
   }
@@ -167,21 +156,21 @@ void bno08XSetup() {
   // SET UP IMU REPORTS
   setReports();
   delay(100);
-  last = millis();  
+  last_reading = millis();  
 }
 
 void bno08XLoop() {
   // delay(10);
   unsigned long curr = millis();
-  if (curr - last >= UPDATE_RATE_MS - UPDATE_RATE_CORRECTION) {
-    Serial.print(curr - last);
+  if (curr - last_reading >= UPDATE_RATE_MS - UPDATE_RATE_CORRECTION) {
+    Serial.print(curr - last_reading);
     Serial.print("\t"); Serial.print(ypr.yaw);
     Serial.print("\t"); Serial.print(gyro.y); // Rotational acceleration on y-axis
     Serial.print("\t"); Serial.print(magnitude(&accel, true));
     Serial.print("\t"); Serial.print(step_ctr.steps); 
     Serial.print("\t"); Serial.println(activity.mostLikely);
    
-    last = curr;
+    last_reading = curr;
   }
   if (!mockBNO08X) {
     getSensorData();

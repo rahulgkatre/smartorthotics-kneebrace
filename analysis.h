@@ -28,4 +28,8 @@ public:
   }
 };
 
+// moving inflection point. calculate delta for the specific gait being assessed. 
+// maintain something like prev 50 values and if there is a unique inflection note it and sleep for a bit (defined in millis by human walking gait)
+  // maybe use height to infer walking pattern and go from there...
+
 #endif
