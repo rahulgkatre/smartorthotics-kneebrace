@@ -12,8 +12,8 @@
 #include <Arduino.h>
 #include <Adafruit_BNO08x.h>
 
-// #include <I2C.h> ** REUIRED FOR MBED
-// #include <Wire.h> ** REQUIRED FOR MBED
+//#include <I2C.h> //** REUIRED FOR MBED
+#include <Wire.h> //** REQUIRED FOR MBED
 // #include <rtos.h>
 // #include "rp2040/utils.h"
 
@@ -22,28 +22,32 @@
 #define BNO08X_INT 9
 
 // Pins for I2C mode - RP2040
-// #define BNO08X_SDA 2
-// #define BNO08X_SCL 3
+#define BNO08X_SDA 2
+#define BNO08X_SCL 3
 // Pins for I2C mode - ESP32
-#define BNO08X_SDA 21
-#define BNO08X_SCL 22
+// #define BNO08X_SDA 21
+// #define BNO08X_SCL 22
 
 // Print Out
 #define PRINT true
 
 // No Reset
 #define BNO08X_RESET -1
-
+  
 // Analysis
-#define WINDOW_SIZE 10
-// 1000 Hz standard update rate
-#define REPORT_RATE_US 1500
+#define WINDOW_SIZE 25 // For 100 Hz, assuming avg height and therefore gait of 2 hz, window size 12 would give us 1/4 of a gait.
+#define INFLUENCE 0.06 // Influence of new values on stddev
+#define THRESHOLD 3.2 // Threshold for peak detection
+#define PEAK_DEADZONE_Y 0.2 // Peak Deadzone for gyro
+#define DELTA_ALIVEZONE 0.25 // Peak Deadzone for gyro
+// 100 Hz standard update rate
+#define REPORT_RATE_US 10000
 // 10 Hz interpretation rate
 #define INTER_RATE_US  100000
-// 400 Hz YPR update rate (do we need this?)
-#define ARVR_ROTVEC_US 5000
+// 100 Hz YPR update rate (do we need this?)
+#define ARVR_ROTVEC_US 10000
 // 30 Hz serial output rate
-#define UPDATE_RATE_MS 33
+#define UPDATE_RATE_MS 33 
 #define UPDATE_RATE_CORRECTION 2
 
 // Includes and defines for Filesystem.ino
@@ -68,7 +72,7 @@
 void setup()
 {
     // Serial port for debugging purposes
-    Serial.begin(115200);
+    Serial.begin(57600);
     bno08XSetup();
 
     // Uncomment if working with Wifi-enabled feather
