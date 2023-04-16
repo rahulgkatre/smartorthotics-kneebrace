@@ -30,6 +30,7 @@
 
 // Print Out
 #define PRINT true
+#define PRINT_PCF false
 
 // No Reset
 #define BNO08X_RESET -1
@@ -38,8 +39,9 @@
 #define WINDOW_SIZE 25 // For 100 Hz, assuming avg height and therefore gait of 2 hz, window size 12 would give us 1/4 of a gait.
 #define INFLUENCE 0.06 // Influence of new values on stddev
 #define THRESHOLD 3.2 // Threshold for peak detection
-#define PEAK_DEADZONE_Y 0.2 // Peak Deadzone for gyro
-#define DELTA_ALIVEZONE 0.25 // Peak Deadzone for gyro
+#define PEAK_DEADZONE_Y 1.5 // Peak Deadzone for gyro
+#define DELTA_ALIVEZONE 0.6 // Peak Deadzone for gyro
+#define PEAK_SLEEP 20 // Peak Deadzone for gyro
 // 100 Hz standard update rate
 #define REPORT_RATE_US 10000
 // 10 Hz interpretation rate
@@ -74,6 +76,7 @@ void setup()
     // Serial port for debugging purposes
     Serial.begin(57600);
     bno08XSetup();
+    pcf8591Setup();
 
     // Uncomment if working with Wifi-enabled feather
     // if (!fileSystemSetup()) {
@@ -87,4 +90,5 @@ void setup()
 void loop() {
     // webServerLoop();
     bno08XLoop();
+    pcf8591Loop();
 }

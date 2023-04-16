@@ -189,6 +189,12 @@ private:
   xyz_t delta;
   bool hit_peak_y = 0;
   int last_peak = 0;
+  int last_pos = 0;
+  int last_neg = 0;
+  float stance_percent = 0;
+  float second_last_neg_value = 0;
+  float last_neg_value = 0;
+  float neg_peak_ratio = 0;
 
   xyz_t prev_var;
   xyz_t var; 
@@ -229,7 +235,7 @@ public:
     prev_delta = delta;
     delta = avg - prev_avg;
 
-    if (delta.y > 0 && prev_delta.y < 0 || delta.y < 0 && prev_delta.y > 0) {
+    if (num_readings - last_peak > PEAK_SLEEP && (delta.y > 0 && prev_delta.y < 0 && avg.y < 0 || delta.y < 0 && prev_delta.y > 0 && avg.y > 0)) {
       hit_peak_y = 1;
       last_peak = num_readings;
     } else if (num_readings - last_peak > 4) {
@@ -264,12 +270,30 @@ public:
   int peak_detection_y() {
     float difference = avg.y - (prev_avg.y);
     if (hit_peak_y && natural_gait(avg.y, delta.y) && std::abs(difference) > THRESHOLD * std::sqrt(prev_var.y)) {
-      return difference > 0 ? 1 : -1;
+      if (difference > 0) {
+        stance_percent = (float)(last_neg - last_pos) / (float)(num_readings - last_pos);
+        neg_peak_ratio = std::max(0.0f, std::min(1.0f, second_last_neg_value / last_neg_value));
+        last_pos = num_readings;
+        hit_peak_y = 0;
+        return 1;
+      } else {
+        second_last_neg_value = last_neg_value;
+        last_neg_value = avg.y;
+        last_neg = num_readings;
+        hit_peak_y = 0;
+        return -1;
+      }
     }
     return 0;
   }
   xyz_t* get_delta() {
     return &delta;
+  }
+  float get_stance_percent() {
+    return stance_percent;
+  }
+  float get_peak_ratio() {
+    return neg_peak_ratio;
   }
 };
 
@@ -416,8 +440,12 @@ void bno08XLoop() {
     Serial.print("\t"); Serial.print(gyro_filter.get_prev_std_y() * THRESHOLD); // Rotational acceleration on y-axis
     Serial.print("\t"); Serial.print(-1 * (gyro_filter.get_prev_std_y() * THRESHOLD)); // Rotational acceleration on y-axis
     Serial.print("\t"); Serial.print(gyro_filter.peak_detection_y() * 5); // Rotational acceleration on y-axis
-//    Serial.print("\t"); Serial.print(magnitude(accel_filter.get_avg(), true));
-//    Serial.print("\t"); Serial.print(step_ctr.steps);
+    Serial.print("\t"); Serial.print(gyro_filter.get_stance_percent());
+    Serial.print("\t"); Serial.print(gyro_filter.get_peak_ratio());
+    Serial.print("\t"); Serial.print(magnitude(accel_filter.get_avg(), true));
+    Serial.print("\t"); Serial.print(step_ctr.steps);
+    Serial.print("\t"); Serial.print(int_to_volts(pcf.analogRead(3), 8, ADC_REFERENCE_VOLTAGE));
+    
 //    Serial.print("\t"); Serial.print(activity.getMostLikelyActivity());
     Serial.print("\t"); Serial.print(gyro_filter.get_delta()->y);
     Serial.println();
